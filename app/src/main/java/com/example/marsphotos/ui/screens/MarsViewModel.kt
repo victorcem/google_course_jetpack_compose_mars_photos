@@ -17,7 +17,7 @@ import retrofit2.HttpException
 import java.io.IOException
 
 sealed interface MarsUiState {
-    data class Success(val photos: String) : MarsUiState
+    data class Success(val photos: List<MarsPhoto>) : MarsUiState
     object Error : MarsUiState
     object Loading : MarsUiState
 }
@@ -27,25 +27,16 @@ class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : Vi
     var marsUiState: MarsUiState by mutableStateOf(MarsUiState.Loading)
         private set
 
-    /**
-     * Call getMarsPhotos() on init so we can display status immediately.
-     */
     init {
         getMarsPhotos()
     }
 
-    /**
-     * Gets Mars photos information from the Mars API Retrofit service and updates the
-     * [MarsPhoto] [List] [MutableList].
-     */
+
     fun getMarsPhotos() {
         viewModelScope.launch {
             marsUiState = MarsUiState.Loading
             marsUiState = try {
-                val listResult = marsPhotosRepository.getMarsPhotos()
-                MarsUiState.Success(
-                    "Success: ${listResult.size} Mars photos retrieved"
-                )
+                MarsUiState.Success(marsPhotosRepository.getMarsPhotos())
             } catch (e: IOException) {
                 MarsUiState.Error
             } catch (e: HttpException) {
@@ -54,9 +45,6 @@ class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : Vi
         }
     }
 
-    /**
-     * Factory for [MarsViewModel] that takes [MarsPhotosRepository] as a dependency
-     */
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
